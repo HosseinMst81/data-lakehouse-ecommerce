@@ -1,0 +1,62 @@
+# phase1-environment-setup/docker-compose.yml
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000"   # S3 API
+      - "9001:9001"   # Web Console
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - lakehouse-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spark-master:
+    build: ./spark
+    container_name: spark-master
+    ports:
+      - "8080:8080"   # Spark Master Web UI
+      - "7077:7077"   # Spark Master RPC
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_MASTER_HOST=spark-master
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    volumes:
+      - ./scripts:/opt/spark/work-dir/scripts   # mount test scripts
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+    networks:
+      - lakehouse-net
+
+  spark-worker:
+    build: ./spark
+    container_name: spark-worker
+    ports:
+      - "8081:8081"   # Worker Web UI
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    volumes:
+      - ./scripts:/opt/spark/work-dir/scripts
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+    depends_on:
+      - spark-master
+    networks:
+      - lakehouse-net
+
+volumes:
+  minio_data:
+
+networks:
+  lakehouse-net:
+    driver: bridge

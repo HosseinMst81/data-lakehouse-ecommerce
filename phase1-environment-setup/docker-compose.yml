@@ -81,6 +81,8 @@ services:
       - "8000:8000"
     environment:
       - SPARK_NO_DAEMONIZE=true
+      - SPARK_HOME=/opt/spark
+      - PYTHONPATH=/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
     volumes:
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
       - ../phase2-bronze-ingestion/jars/delta-spark_2.12-3.2.0.jar:/opt/spark/jars/delta-spark_2.12-3.2.0.jar

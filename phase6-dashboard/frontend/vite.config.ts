@@ -8,13 +8,13 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"), 
+      "@": path.resolve(__dirname, "./src"),
     },
   },
   server: {
-    port: 3000,
+    port: 8000,
     proxy: {
-      "/api": "http://dashboard-backend:8000", // used by docker!
+      "/api": "http://localhost:8000",
     },
   },
 });

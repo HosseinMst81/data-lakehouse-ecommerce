@@ -1,11 +1,10 @@
-# phase1-environment-setup/docker-compose.yml
 services:
   minio:
     image: minio/minio:latest
     container_name: minio
     ports:
-      - "9000:9000"   # S3 API
-      - "9001:9001"   # Web Console
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
@@ -21,36 +20,57 @@ services:
       retries: 5
 
   spark-master:
-    build: ./spark
+    image: phase1-environment-setup-spark-master:latest
     container_name: spark-master
     ports:
-      - "8080:8080"   # Spark Master Web UI
-      - "7077:7077"   # Spark Master RPC
+      - "8080:8080"
+      - "7077:7077"
     environment:
       - SPARK_NO_DAEMONIZE=true
       - SPARK_MASTER_HOST=spark-master
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     volumes:
-      - ./scripts:/opt/spark/work-dir/scripts   # mount test scripts
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../phase2-bronze-ingestion/jars/delta-spark_2.12-3.2.0.jar:/opt/spark/jars/delta-spark_2.12-3.2.0.jar
+      - ../phase2-bronze-ingestion/jars/delta-storage-3.2.0.jar:/opt/spark/jars/delta-storage-3.2.0.jar
     networks:
       - lakehouse-net
 
   spark-worker:
-    build: ./spark
+    image: phase1-environment-setup-spark-worker:latest
     container_name: spark-worker
     ports:
-      - "8081:8081"   # Worker Web UI
+      - "8081:8081"
     environment:
       - SPARK_NO_DAEMONIZE=true
       - SPARK_WORKER_MEMORY=1G
       - SPARK_WORKER_CORES=1
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     volumes:
-      - ./scripts:/opt/spark/work-dir/scripts
       - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../phase2-bronze-ingestion/jars/delta-spark_2.12-3.2.0.jar:/opt/spark/jars/delta-spark_2.12-3.2.0.jar
+      - ../phase2-bronze-ingestion/jars/delta-storage-3.2.0.jar:/opt/spark/jars/delta-storage-3.2.0.jar
     depends_on:
       - spark-master
+    networks:
+      - lakehouse-net
+
+  jupyter:                         
+    build: ./jupyter
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_HOME=/opt/spark
+      - PYTHONPATH=/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
+    command: >
+      /bin/bash -c "jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='' --notebook-dir=/home/spark/notebooks"
+    volumes:
+      - ../notebooks:/home/spark/notebooks
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../phase2-bronze-ingestion/jars/delta-spark_2.12-3.2.0.jar:/opt/spark/jars/delta-spark_2.12-3.2.0.jar
+      - ../phase2-bronze-ingestion/jars/delta-storage-3.2.0.jar:/opt/spark/jars/delta-storage-3.2.0.jar
     networks:
       - lakehouse-net
 

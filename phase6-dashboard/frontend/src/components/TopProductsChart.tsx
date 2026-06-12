@@ -1,6 +1,4 @@
-'use client'
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card } from '@/components/ui/card'
 import { apiClient } from '@/lib/api'
@@ -13,9 +11,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts'
+import { useChartTheme } from '@/lib/chartTheme';
 
 const ChartSkeleton = () => (
-  <div className="h-80 bg-gradient-to-r from-slate-100 to-slate-50 rounded-lg animate-pulse" />
+  <div className="h-80 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800 rounded-lg animate-pulse" />
 )
 
 const formatCurrency = (value: number): string => {
@@ -33,6 +32,11 @@ const truncateText = (text: string, maxLength: number): string => {
 
 export function TopProductsChart() {
   const [limit, setLimit] = useState(10)
+  const theme = useChartTheme()
+
+  const mounted = useState(()=>{
+    return true;
+  });
 
   const { data: topProducts, isLoading, error } = useQuery({
     queryKey: ['topProducts', limit],
@@ -46,25 +50,25 @@ export function TopProductsChart() {
 
   if (error) {
     return (
-      <Card className="p-6 bg-white border-slate-200">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+      <Card className="p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Top Products by Revenue
         </h3>
-        <div className="text-sm text-red-600">Error loading chart data</div>
+        <div className="text-sm text-red-600 dark:text-red-400">Error loading chart data</div>
       </Card>
     )
   }
 
   return (
-    <Card className="p-6 bg-white border-slate-200">
+    <Card className="p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-slate-900">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
           Top Products by Revenue
         </h3>
         <select
           value={limit}
           onChange={(e) => setLimit(Number(e.target.value))}
-          className="px-3 py-1 text-sm border border-slate-300 rounded-md bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="px-3 py-1 text-sm border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value={5}>Top 5</option>
           <option value={10}>Top 10</option>
@@ -73,31 +77,31 @@ export function TopProductsChart() {
       </div>
       {isLoading ? (
         <ChartSkeleton />
-      ) : (
+      ) : mounted ? (
         <ResponsiveContainer width="100%" height={320}>
           <BarChart
             data={chartData}
             layout="vertical"
             margin={{ top: 5, right: 30, left: 0 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis type="number" stroke="#94a3b8" tick={{ fill: '#64748b' }} />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
+            <XAxis type="number" stroke={theme.text} tick={{ fill: theme.label }} />
             <YAxis
               dataKey="displayName"
               type="category"
               width={195}
-              stroke="#94a3b8"
-              tick={{ fill: '#64748b', fontSize: 12 }}
+              stroke={theme.text}
+              tick={{ fill: theme.label, fontSize: 12 }}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1e293b',
+                backgroundColor: theme.tooltip.bg,
                 border: 'none',
                 borderRadius: '6px',
-                color: '#f1f5f9',
+                color: theme.tooltip.text,
               }}
               formatter={(value: number) => formatCurrency(value)}
-              labelStyle={{ color: '#cbd5e1' }}
+              labelStyle={{ color: theme.tooltip.label }}
             />
             <Bar
               dataKey="TotalRevenue"
@@ -106,7 +110,7 @@ export function TopProductsChart() {
             />
           </BarChart>
         </ResponsiveContainer>
-      )}
+      ) : null}
     </Card>
   )
 }

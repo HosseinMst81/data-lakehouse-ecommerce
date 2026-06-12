@@ -1,56 +1,69 @@
-'use client'
+"use client";
 
-import { useQuery } from '@tanstack/react-query'
-import { Card } from '@/components/ui/card'
-import { apiClient } from '@/lib/api'
+import { Card } from "@/components/ui/card";
+import { apiClient } from "@/lib/api";
+import { useChartTheme } from "@/lib/chartTheme";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+    Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+} from "recharts";
 
 const ChartSkeleton = () => (
-  <div className="h-80 bg-gradient-to-r from-slate-100 to-slate-50 rounded-lg animate-pulse" />
-)
+  <div className="h-80 bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-700 dark:to-slate-800 rounded-lg animate-pulse" />
+);
 
 const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(value)
-}
+  }).format(value);
+};
 
 export function DailySalesChart() {
-  const { data: dailySales, isLoading, error } = useQuery({
-    queryKey: ['dailySales'],
+  const {
+    data: dailySales,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["dailySales"],
     queryFn: () => apiClient.getDailySales(100),
-  })
+  });
+
+  const mounted = useState(()=>{
+    return true;
+  });
+  const theme = useChartTheme(); 
 
   if (error) {
     return (
-      <Card className="p-6 bg-white border-slate-200">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+      <Card className="p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
           Daily Sales Trend
         </h3>
-        <div className="text-sm text-red-600">Error loading chart data</div>
+        <div className="text-sm text-red-600 dark:text-red-400">
+          Error loading chart data
+        </div>
       </Card>
-    )
+    );
   }
 
   return (
-    <Card className="p-6 bg-white border-slate-200">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">
+    <Card className="p-6 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
         Daily Sales Trend
       </h3>
       {isLoading ? (
         <ChartSkeleton />
-      ) : (
+      ) : mounted ? (
         <ResponsiveContainer width="100%" height={320}>
           <AreaChart data={dailySales || []}>
             <defs>
@@ -59,28 +72,28 @@ export function DailySalesChart() {
                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} />
             <XAxis
               dataKey="SaleDate"
-              stroke="#94a3b8"
-              style={{ fontSize: '12px' }}
-              tick={{ fill: '#64748b' }}
+              stroke={theme.text}
+              style={{ fontSize: "12px" }}
+              tick={{ fill: theme.label }}
             />
             <YAxis
-              stroke="#94a3b8"
-              style={{ fontSize: '12px' }}
-              tick={{ fill: '#64748b' }}
+              stroke={theme.text}
+              style={{ fontSize: "12px" }}
+              tick={{ fill: theme.label }}
               tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#1e293b',
-                border: 'none',
-                borderRadius: '6px',
-                color: '#f1f5f9',
+                backgroundColor: theme.tooltip.bg,
+                border: "none",
+                borderRadius: "6px",
+                color: theme.tooltip.text,
               }}
               formatter={(value: number) => formatCurrency(value)}
-              labelStyle={{ color: '#cbd5e1' }}
+              labelStyle={{ color: theme.tooltip.label }}
             />
             <Area
               type="monotone"
@@ -92,7 +105,7 @@ export function DailySalesChart() {
             />
           </AreaChart>
         </ResponsiveContainer>
-      )}
+      ) : null}
     </Card>
-  )
+  );
 }

@@ -1,0 +1,31 @@
+# .gitignore
+# Dataset
+data.csv
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Spark
+metastore_db/
+spark-warehouse/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Output Data
+phase2-bronze-ingestion/output/

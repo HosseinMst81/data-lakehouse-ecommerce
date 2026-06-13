@@ -73,6 +73,37 @@ services:
       - ../phase2-bronze-ingestion/jars/delta-storage-3.2.0.jar:/opt/spark/jars/delta-storage-3.2.0.jar
     networks:
       - lakehouse-net
+  
+  dashboard-backend:
+    build: ../phase6-dashboard/backend
+    container_name: dashboard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - SPARK_HOME=/opt/spark
+      - PYTHONPATH=/opt/spark/python:/opt/spark/python/lib/py4j-0.10.9.7-src.zip
+    volumes:
+      - ./spark/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf
+      - ../phase2-bronze-ingestion/jars/delta-spark_2.12-3.2.0.jar:/opt/spark/jars/delta-spark_2.12-3.2.0.jar
+      - ../phase2-bronze-ingestion/jars/delta-storage-3.2.0.jar:/opt/spark/jars/delta-storage-3.2.0.jar
+    networks:
+      - lakehouse-net
+    depends_on:
+      - spark-master
+      - minio
+
+  dashboard-frontend:
+    build: ../phase6-dashboard/frontend
+    container_name: dashboard-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../phase6-dashboard/frontend/src:/app/src   # for hot-reload
+    networks:
+      - lakehouse-net
+    depends_on:
+      - dashboard-backend
 
 volumes:
   minio_data:

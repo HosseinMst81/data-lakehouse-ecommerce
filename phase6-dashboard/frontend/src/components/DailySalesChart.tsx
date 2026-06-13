@@ -92,8 +92,22 @@ export function DailySalesChart() {
                 borderRadius: "6px",
                 color: theme.tooltip.text,
               }}
-              formatter={(value: number) => formatCurrency(value)}
               labelStyle={{ color: theme.tooltip.label }}
+              content={({ active, payload, label }) => (
+                <div className="bg-white dark:bg-slate-800 p-2 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
+                  <p className="text-sm text-slate-900 dark:text-white mb-1">{label}</p>
+                  {active && payload && payload.length > 0 && (
+                    <div className="space-y-1">
+                      {payload.map((entry, index) => (
+                        <div key={`item-${index}`} className="flex items-center">
+                          <span className={`w-2 h-2 rounded-full mr-2 ${entry.color}`}></span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">{entry.name}: {formatCurrency(entry.value as number)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             />
             <Area
               type="monotone"
